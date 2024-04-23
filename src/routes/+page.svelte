@@ -68,8 +68,16 @@
 				{#if usedLoads}
 					{#each usedLoads as load}
 						<div>
-							<button on:click={() => (bannedLoads = [loadKey(load), ...bannedLoads])}> x </button>
-							<button on:click={() => (preferredLoads = [loadKey(load), ...preferredLoads])}>
+							<button
+								on:click={() => (bannedLoads = [loadKey(load), ...bannedLoads])}
+								title="Do not use this rolling stock"
+							>
+								x
+							</button>
+							<button
+								on:click={() => (preferredLoads = [loadKey(load), ...preferredLoads])}
+								title="Use timings for this rolling stock wherever available"
+							>
 								*
 							</button>
 							{load.description}

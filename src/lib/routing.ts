@@ -29,29 +29,27 @@ export function route(
 		}
 
 		for (const linkTo in bplan.links[currentTiploc]) {
-			for (const link of bplan.links[currentTiploc][linkTo]) {
-				let timings = link.timings;
-				let filtered = timings.filter((t) => preferredLoads.includes(loadKey(t.load)));
-				if (filtered.length > 0) {
-					timings = filtered;
+			let timings = bplan.links[currentTiploc][linkTo].map((x) => x.timings).flat();
+			let filtered = timings.filter((t) => preferredLoads.includes(loadKey(t.load)));
+			if (filtered.length > 0) {
+				timings = filtered;
+			}
+			for (const timing of timings) {
+				if (timing.fromStart != currentIsStop) {
+					continue;
 				}
-				for (const timing of timings) {
-					if (timing.fromStart != currentIsStop) {
-						continue;
-					}
-					if (banLoads.includes(loadKey(timing.load))) {
-						continue;
-					}
-					const nextNode = (timing.toStop ? 's' : 'f') + linkTo;
-					const alt = dists[current] + timing.time;
-					if (!dists[nextNode] || alt < dists[nextNode]) {
-						prev[nextNode] = timing;
-						dists[nextNode] = alt;
+				if (banLoads.includes(loadKey(timing.load))) {
+					continue;
+				}
+				const nextNode = (timing.toStop ? 's' : 'f') + linkTo;
+				const alt = dists[current] + timing.time;
+				if (!dists[nextNode] || alt < dists[nextNode]) {
+					prev[nextNode] = timing;
+					dists[nextNode] = alt;
 
-						// we can't decrease priority; instead we allow duplicate
-						// entries in the queue and filter them out with done
-						queue.enqueue([alt, nextNode]);
-					}
+					// we can't decrease priority; instead we allow duplicate
+					// entries in the queue and filter them out with done
+					queue.enqueue([alt, nextNode]);
 				}
 			}
 		}
