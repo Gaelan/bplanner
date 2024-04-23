@@ -14,7 +14,7 @@ beforeAll(async () => {
 
 describe('route', () => {
 	it('Leuchars-Edinburgh', async () => {
-		const [dist, hist] = route(bplan, 'LEUCHRS', 'EDINBUR', [], []);
+		const [dist, hist] = route(bplan, 'LEUCHRS', true, 'EDINBUR', true, [], []);
 
 		expect([
 			dist,
@@ -23,7 +23,7 @@ describe('route', () => {
 	});
 
 	it('Leuchars-Edinburgh with preferred loads', async () => {
-		const [dist, hist] = route(bplan, 'LEUCHRS', 'EDINBUR', ['170  100 '], []);
+		const [dist, hist] = route(bplan, 'LEUCHRS', true, 'EDINBUR', true, ['170  100 '], []);
 
 		expect([
 			dist,
@@ -32,7 +32,7 @@ describe('route', () => {
 	});
 
 	it('Leuchars-London', async () => {
-		const [dist, hist] = route(bplan, 'LEUCHRS', 'KNGX', [], []);
+		const [dist, hist] = route(bplan, 'LEUCHRS', true, 'KNGX', true, [], []);
 
 		expect([
 			dist,
@@ -41,7 +41,7 @@ describe('route', () => {
 	});
 
 	it('Leuchars-London with banned loads', async () => {
-		const [dist, hist] = route(bplan, 'LEUCHRS', 'KNGX', [], ['BUS   ']);
+		const [dist, hist] = route(bplan, 'LEUCHRS', true, 'KNGX', true, [], ['BUS   ']);
 
 		expect([
 			dist,

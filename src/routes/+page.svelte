@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { loadBplan, loadKey } from '$lib/bplan';
+	import { loadBplan, loadKey, type Timing } from '$lib/bplan';
 	import { getTiplocLocations } from '$lib/railmap';
 	import { route } from '$lib/routing';
 	import { getFastestTiming } from '$lib/unused_astar';
@@ -8,20 +8,41 @@
 	const bplan = loadBplan();
 	bplan.then((bp) => {
 		console.log(bp);
-		getTiplocLocations().then((locs) => console.log(getFastestTiming(bp, locs)));
 	});
 
-	let fromTiploc: string = 'LEUCHRS';
-	let toTiploc: string = 'KNGX';
-	let bannedLoads: string[] = [];
+	let waypoints: { tiploc: string; stop: boolean; dwell: number }[] = [
+		{ tiploc: 'EDINBUR', stop: true, dwell: 0 },
+		{ tiploc: 'KNGX', stop: true, dwell: 0 }
+	];
+	let bannedLoads: string[] = ['BUS  0 '];
 	let preferredLoads: string[] = [];
+
+	let r: Promise<[number, Timing[]] | null>;
 
 	$: r = (async () => {
 		const bp = await bplan;
-		if (!fromTiploc || !toTiploc || !bp.locations[fromTiploc] || !bp.locations[toTiploc]) {
+		if (waypoints.some((x) => !bp.locations[x.tiploc])) {
 			return null;
 		}
-		return route(bp, fromTiploc, toTiploc, preferredLoads, bannedLoads);
+		console.log(bannedLoads);
+		const segments = waypoints
+			.slice(1)
+			.map((x, i) =>
+				route(
+					bp,
+					waypoints[i].tiploc,
+					waypoints[i].stop,
+					x.tiploc,
+					x.stop,
+					preferredLoads,
+					bannedLoads
+				)
+			);
+		const ret: [number, Timing[]] = [
+			segments.map((x) => x[0]).reduce((a, b) => a + b),
+			segments.map((x) => x[1]).flat()
+		];
+		return ret;
 	})();
 
 	$: usedLoads = (async () => {
@@ -37,31 +58,36 @@
 {:then bplan}
 	<div id="main">
 		<div>
-			<div>
-				<label>From: <input class="tiploc" list="locs" bind:value={fromTiploc} /></label>
-			</div>
-			<div>
-				<label>To: <input class="tiploc" list="locs" bind:value={toTiploc} /></label>
-			</div>
+			{#each waypoints as _, i}
+				<div>
+					<input class="tiploc" list="locs" bind:value={waypoints[i].tiploc} />
+					<select bind:value={waypoints[i].stop}>
+						<option value={true}>stop</option>
+						<option value={false}>pass</option>
+					</select>
+					{#if waypoints.length > 2}
+						<button
+							on:click={() => {
+								waypoints.splice(i, 1);
+								waypoints = waypoints;
+							}}>x</button
+						>
+					{/if}
+					<button
+						on:click={() => {
+							waypoints.splice(i + 1, 0, { tiploc: '', stop: true, dwell: 1 });
+							waypoints = waypoints;
+						}}>+</button
+					>
+					<br />
+				</div>
+			{/each}
 			<datalist id="locs">
 				{#each Object.keys(bplan.locations) as tiploc}
 					<option value={tiploc}>{bplan.locations[tiploc].name}</option>
 				{/each}
 			</datalist>
 
-			<!-- {#await stockOptions then stockOptions}
-				{#if stockOptions}
-					<button on:click={() => (loads = [...stockOptions])}>Select All</button>
-					{#each stockOptions as opt}
-						<div>
-							<label>
-								<input type="checkbox" bind:group={loads} value={opt} />
-								{bplan.loads[opt].description}
-							</label>
-						</div>
-					{/each}
-				{/if}
-			{/await} -->
 			Using timings for rolling stock:
 
 			{#await usedLoads then usedLoads}
@@ -120,7 +146,7 @@
 							.round({ largestUnit: 'hour', smallestUnit: 'second' })
 							.toLocaleString()}
 					</div>
-					{#each r[1] as link}
+					{#each r[1] as link, i}
 						<div>
 							<div class="point" class:stop={link.fromStart}>{link.link.from.name}</div>
 

@@ -4,12 +4,14 @@ import { MinPriorityQueue, PriorityQueue } from '@datastructures-js/priority-que
 export function route(
 	bplan: Bplan,
 	fromTiploc: string,
+	fromStop: boolean,
 	toTiploc: string,
+	toStop: boolean,
 	preferredLoads: string[],
 	banLoads: string[]
 ): [number, Timing[]] {
-	let fromNode = 's' + fromTiploc;
-	let toNode = 's' + toTiploc;
+	let fromNode = (fromStop ? 's' : 'f') + fromTiploc;
+	let toNode = (toStop ? 's' : 'f') + toTiploc;
 	let prev: Record<string, Timing> = {};
 	let dists = { [fromNode]: 0 };
 	let done = new Set();
