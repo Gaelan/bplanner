@@ -14,13 +14,14 @@
 	let fromTiploc: string = 'LEUCHRS';
 	let toTiploc: string = 'KNGX';
 	let bannedLoads: string[] = [];
+	let preferredLoads: string[] = [];
 
 	$: r = (async () => {
 		const bp = await bplan;
 		if (!fromTiploc || !toTiploc || !bp.locations[fromTiploc] || !bp.locations[toTiploc]) {
 			return null;
 		}
-		return route(bp, fromTiploc, toTiploc, bannedLoads);
+		return route(bp, fromTiploc, toTiploc, preferredLoads, bannedLoads);
 	})();
 
 	$: usedLoads = (async () => {
@@ -68,20 +69,40 @@
 					{#each usedLoads as load}
 						<div>
 							<button on:click={() => (bannedLoads = [loadKey(load), ...bannedLoads])}> x </button>
+							<button on:click={() => (preferredLoads = [loadKey(load), ...preferredLoads])}>
+								*
+							</button>
 							{load.description}
 						</div>
 					{/each}
 				{/if}
 			{/await}
 
-			Excluded rolling stock:
+			<div>
+				Preferred rolling stock:
 
-			{#each bannedLoads as load}
-				<div>
-					<button on:click={() => (bannedLoads = bannedLoads.filter((x) => x != load))}> x </button>
-					{bplan.loads[load].description}
-				</div>
-			{/each}
+				{#each preferredLoads as load}
+					<div>
+						<button on:click={() => (preferredLoads = preferredLoads.filter((x) => x != load))}>
+							x
+						</button>
+						{bplan.loads[load].description}
+					</div>
+				{/each}
+			</div>
+
+			<div>
+				Excluded rolling stock:
+
+				{#each bannedLoads as load}
+					<div>
+						<button on:click={() => (bannedLoads = bannedLoads.filter((x) => x != load))}>
+							x
+						</button>
+						{bplan.loads[load].description}
+					</div>
+				{/each}
+			</div>
 		</div>
 		<div class="results">
 			{#await r then r}

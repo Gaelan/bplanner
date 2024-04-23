@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeAll } from 'vitest';
 import { route } from './routing';
-import { loadBplan, loadBplanFromCompressedStream, type Bplan } from './bplan';
+import { loadBplan, loadBplanFromCompressedStream, loadKey, type Bplan } from './bplan';
 import { createReadableStreamFromReadable } from './testUtil';
 import { createReadStream } from 'node:fs';
 
@@ -14,7 +14,16 @@ beforeAll(async () => {
 
 describe('route', () => {
 	it('Leuchars-Edinburgh', async () => {
-		const [dist, hist] = route(bplan, 'LEUCHRS', 'EDINBUR', []);
+		const [dist, hist] = route(bplan, 'LEUCHRS', 'EDINBUR', [], []);
+
+		expect([
+			dist,
+			hist.map((x) => [x.link.from.tiploc, x.link.to.tiploc, x.load.description, x.time])
+		]).toMatchSnapshot();
+	});
+
+	it('Leuchars-Edinburgh with preferred loads', async () => {
+		const [dist, hist] = route(bplan, 'LEUCHRS', 'EDINBUR', ['170  100 '], []);
 
 		expect([
 			dist,
@@ -23,7 +32,16 @@ describe('route', () => {
 	});
 
 	it('Leuchars-London', async () => {
-		const [dist, hist] = route(bplan, 'LEUCHRS', 'KNGX', []);
+		const [dist, hist] = route(bplan, 'LEUCHRS', 'KNGX', [], []);
+
+		expect([
+			dist,
+			hist.map((x) => [x.link.from.tiploc, x.link.to.tiploc, x.load.description, x.time])
+		]).toMatchSnapshot();
+	});
+
+	it('Leuchars-London with banned loads', async () => {
+		const [dist, hist] = route(bplan, 'LEUCHRS', 'KNGX', [], ['BUS   ']);
 
 		expect([
 			dist,

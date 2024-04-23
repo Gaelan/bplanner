@@ -5,6 +5,7 @@ export function route(
 	bplan: Bplan,
 	fromTiploc: string,
 	toTiploc: string,
+	preferredLoads: string[],
 	banLoads: string[]
 ): [number, Timing[]] {
 	let fromNode = 's' + fromTiploc;
@@ -29,7 +30,12 @@ export function route(
 
 		for (const linkTo in bplan.links[currentTiploc]) {
 			for (const link of bplan.links[currentTiploc][linkTo]) {
-				for (const timing of link.timings) {
+				let timings = link.timings;
+				let filtered = timings.filter((t) => preferredLoads.includes(loadKey(t.load)));
+				if (filtered.length > 0) {
+					timings = filtered;
+				}
+				for (const timing of timings) {
 					if (timing.fromStart != currentIsStop) {
 						continue;
 					}
@@ -70,19 +76,27 @@ export function route(
 
 	// hist = simplifyLoads(hist);
 
-	hist = simplifyLoads(hist);
+	hist = simplifyLoads(hist, preferredLoads);
 
 	hist.reverse();
 
-	hist = simplifyLoads(hist);
+	hist = simplifyLoads(hist, preferredLoads);
 
 	return [dists[toNode], hist];
 }
 
-function simplifyLoads(hist: Timing[]) {
+function simplifyLoads(hist: Timing[], preferredLoads: string[]) {
 	const seenLoads = new Set();
 
 	return hist.map((timing) => {
+		const preferredTiming = timing.link.timings.find(
+			(t) =>
+				t.fromStart == timing.fromStart &&
+				t.toStop == timing.toStop &&
+				t.time <= timing.time &&
+				preferredLoads.includes(loadKey(t.load))
+		);
+
 		const betterTiming = timing.link.timings.find(
 			(t) =>
 				t.fromStart == timing.fromStart &&
@@ -91,7 +105,7 @@ function simplifyLoads(hist: Timing[]) {
 				seenLoads.has(loadKey(t.load))
 		);
 
-		const ret = betterTiming || timing;
+		const ret = preferredTiming || betterTiming || timing;
 
 		seenLoads.add(loadKey(ret.load));
 
