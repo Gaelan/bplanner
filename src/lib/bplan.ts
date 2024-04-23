@@ -1,3 +1,4 @@
+import { base } from '$app/paths';
 export interface Load {
 	type: string;
 	trailingLoad: string;
@@ -62,7 +63,7 @@ export function loadKey(load: Load) {
 export async function loadBplan(): Promise<Bplan> {
 	// it's named this to avoid sveltekit serving it as content-encoding: gz
 	// in development, when we can't guarantee this happen in production
-	const req = await fetch('/bplan.gz.bleh');
+	const req = await fetch(base + '/bplan.gz.bleh');
 	if (!req.ok || !req.body) {
 		throw new Error('failed to fetch bplan data');
 	}
